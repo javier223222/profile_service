@@ -1,0 +1,102 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")     
+}
+model ProfileUser {
+  userId          String   @id
+  pointsCurrent   Int      @default(0)
+  level           Int      @default(1)
+  streakBest      Int      @default(0)
+  currentStreakDays Int    @default(0)
+  avatarUrl       String?  @db.VarChar(255)
+  avatarPublicId  String?  @db.VarChar(255)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  seniority       String   @db.VarChar(100) 
+  specialization  String   @db.VarChar(100) 
+  practiceEvents  PracticeEvent[]
+  dailyActivities DailyActivity[]
+  streakSnapshot  StreakSnapshot?
+  streakHistories StreakHistory[]
+  weeklyProgress   WeeklyProgress[]
+  @@map("profile_user")
+}
+
+model PracticeEvent {
+  eventId       String   @id @default(uuid()) @db.Uuid
+  userId        String
+  occurredAt    DateTime
+  points        Int
+  sourceService String   @db.VarChar(255)
+  domain        String   @db.VarChar(255) 
+  
+  createdAt     DateTime @default(now())
+  user ProfileUser @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  @@index([userId, occurredAt])
+  @@index([occurredAt])
+  @@map("practice_event")
+}
+
+model DailyActivity {
+  userId String
+  day    DateTime @db.Date                 
+  domain String   @db.VarChar(100)
+  events Int
+  points Int
+  user ProfileUser @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  @@id([userId, day])             
+  @@index([userId, day])
+  @@map("daily_activity")
+}
+
+model StreakSnapshot {
+  userId         String   @id
+  startDate      DateTime @db.Date
+  lastActive     DateTime @db.Date
+  lengthDays     Int
+  pointsInStreak Int
+  updatedAt      DateTime @updatedAt
+  user ProfileUser @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  @@map("streak_snapshot")
+}
+
+model StreakHistory {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String
+  startDate   DateTime @db.Date
+  endDate     DateTime @db.Date
+  lengthDays  Int
+  pointsTotal Int
+  brokenBy    String?  @db.VarChar(255)          
+  createdAt   DateTime @default(now())
+  user ProfileUser @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  @@index([userId, startDate])
+  @@map("streak_history")
+}
+
+model LevelRule {
+  level      Int  @id
+  minPoints  Int
+  maxPoints  Int
+  @@map("level_rules")
+}
+
+model WeeklyProgress {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String
+  weekStartDate   DateTime @db.Date
+  completedDays   Boolean[] 
+  currentStreak   Int      @default(0)
+  totalActiveDays Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user ProfileUser @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  @@unique([userId, weekStartDate])
+  @@index([userId, weekStartDate])
+  @@map("weekly_progress")
+}
