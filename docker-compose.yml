@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  profile-service:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      # Variables de entorno necesarias - ajustar según tu configuración
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - RABBITMQ_URL=${RABBITMQ_URL}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+    depends_on:
+      # Como ya tienes la DB y RabbitMQ desplegados, puedes comentar estas líneas
+      # o usarlas como referencia si están en otros contenedores
+      # - postgres
+      # - rabbitmq
+    networks:
+      - microservices-network
+
+networks:
+  microservices-network:
+    external: true # Asume que ya existe una red para tus microservicios

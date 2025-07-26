@@ -47,21 +47,28 @@ export class RabbitMQService implements IMessageConsumer {
                 if (msg) {
                     try {
                         const messageContent = msg.content.toString();
-                        console.log('Received message:', messageContent);
+                        console.log('=== RECEIVED NEW MESSAGE ===');
+                        console.log('Raw message:', messageContent);
                         
                         const parsedMessage = JSON.parse(messageContent);
+                        
+                        // Procesar el mensaje
                         await callback(parsedMessage);
                         
-                        
+                        // Acknowledge el mensaje solo si se procesó correctamente
                         this.channel!.ack(msg);
-                        console.log('Message processed successfully');
+                        console.log('=== MESSAGE ACKNOWLEDGED ===');
                     } catch (error) {
-                        console.error('Error processing message:', error);
-                       
-                        this.channel!.nack(msg, false, true);
+                        console.error('=== ERROR PROCESSING MESSAGE ===');
+                        console.error('Error details:', error);
+                        
+                        // Para evitar bucles infinitos, hacer acknowledge del mensaje
+                        // incluso si hubo error en el procesamiento
+                        this.channel!.ack(msg);
+                        console.log('Message acknowledged despite error to prevent infinite loop');
                     }
                 }
-            });
+            }, { noAck: false }); // Asegurar que noAck esté en false
         } catch (error) {
             console.error('Error setting up consumer:', error);
             throw error;

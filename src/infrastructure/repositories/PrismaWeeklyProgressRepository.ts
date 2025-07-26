@@ -36,31 +36,30 @@ export class PrismaWeeklyProgressRepository implements WeeklyProgressRepository 
 
     async save(weeklyProgress: WeeklyProgress): Promise<void> {
         try {
-            if (weeklyProgress.id) {
-                // Actualizar existente
-                await this.prisma.weeklyProgress.update({
-                    where: { id: weeklyProgress.id },
-                    data: {
-                        completedDays: weeklyProgress.completedDays,
-                        currentStreak: weeklyProgress.currentStreak,
-                        totalActiveDays: weeklyProgress.totalActiveDays,
-                        updatedAt: new Date()
-                    }
-                });
-            } else {
-                // Crear nuevo
-                await this.prisma.weeklyProgress.create({
-                    data: {
+            // Usar upsert para manejar tanto creación como actualización
+            await this.prisma.weeklyProgress.upsert({
+                where: {
+                    userId_weekStartDate: {
                         userId: weeklyProgress.userId,
-                        weekStartDate: weeklyProgress.weekStartDate,
-                        completedDays: weeklyProgress.completedDays,
-                        currentStreak: weeklyProgress.currentStreak,
-                        totalActiveDays: weeklyProgress.totalActiveDays,
-                        createdAt: new Date(),
-                        updatedAt: new Date()
+                        weekStartDate: weeklyProgress.weekStartDate
                     }
-                });
-            }
+                },
+                update: {
+                    completedDays: weeklyProgress.completedDays,
+                    currentStreak: weeklyProgress.currentStreak,
+                    totalActiveDays: weeklyProgress.totalActiveDays,
+                    updatedAt: new Date()
+                },
+                create: {
+                    userId: weeklyProgress.userId,
+                    weekStartDate: weeklyProgress.weekStartDate,
+                    completedDays: weeklyProgress.completedDays,
+                    currentStreak: weeklyProgress.currentStreak,
+                    totalActiveDays: weeklyProgress.totalActiveDays,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                }
+            });
         } catch (error) {
             console.error('Error saving weekly progress:', error);
             throw error;
@@ -102,29 +101,49 @@ export class PrismaWeeklyProgressRepository implements WeeklyProgressRepository 
             let progress = await this.findByUserIdAndWeek(userId, weekStart);
             
             if (!progress) {
-                // Crear nuevo progreso semanal
+                // Crear nuevo progreso semanal usando upsert
                 const completedDays = new Array(7).fill(false);
                 completedDays[dayOfWeek] = true;
                 
-                progress = {
-                    id: crypto.randomUUID(),
-                    userId,
-                    weekStartDate: weekStart,
-                    completedDays,
-                    currentStreak: 1,
-                    totalActiveDays: 1,
-                    createdAt: new Date(),
-                    updatedAt: new Date()
-                };
+                await this.prisma.weeklyProgress.upsert({
+                    where: {
+                        userId_weekStartDate: {
+                            userId,
+                            weekStartDate: weekStart
+                        }
+                    },
+                    update: {
+                        // Si existe, no hacer nada (este caso no debería pasar aquí)
+                    },
+                    create: {
+                        userId,
+                        weekStartDate: weekStart,
+                        completedDays,
+                        currentStreak: 1,
+                        totalActiveDays: 1,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    }
+                });
             } else {
                 // Actualizar progreso existente
-                if (!progress.completedDays[dayOfWeek]) {
-                    progress.completedDays[dayOfWeek] = true;
-                    progress.totalActiveDays += 1;
+                const updatedCompletedDays = [...progress.completedDays];
+                let updatedTotalActiveDays = progress.totalActiveDays;
+                
+                if (!updatedCompletedDays[dayOfWeek]) {
+                    updatedCompletedDays[dayOfWeek] = true;
+                    updatedTotalActiveDays += 1;
                 }
-            }
 
-            await this.save(progress);
+                await this.prisma.weeklyProgress.update({
+                    where: { id: progress.id },
+                    data: {
+                        completedDays: updatedCompletedDays,
+                        totalActiveDays: updatedTotalActiveDays,
+                        updatedAt: new Date()
+                    }
+                });
+            }
         } catch (error) {
             console.error('Error marking day completed:', error);
             throw error;
