@@ -1,4 +1,4 @@
-version: '3.8'
+
 
 services:
   profile-service:
@@ -13,11 +13,7 @@ services:
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
-    depends_on:
-      # Como ya tienes la DB y RabbitMQ desplegados, puedes comentar estas líneas
-      # o usarlas como referencia si están en otros contenedores
-      # - postgres
-      # - rabbitmq
+
     restart: unless-stopped
     networks:
       - microservices-network
