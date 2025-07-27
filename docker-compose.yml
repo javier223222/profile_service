@@ -21,4 +21,4 @@ services:
 
 networks:
   microservices-network:
-    external: true # Asume que ya existe una red para tus microservicios
+    driver: bridge
