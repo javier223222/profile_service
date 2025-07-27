@@ -3,6 +3,8 @@ import { UploadedFile } from 'express-fileupload';
 import { UploadProfileImageUseCase } from '../../application/use-cases/UploadProfileImageUseCase';
 import { UpdateProfileImageByUrlUseCase } from '../../application/use-cases/UpdateProfileImageByUrlUseCase';
 import { UpdateProfileImageResponse } from '../../application/dto/UpdateProfileImageDto';
+import { ContextualValidator } from '../../infrastructure/validation/ContextualValidator';
+import { InputSanitizer } from '../../infrastructure/validation/InputSanitizer';
 
 export class ProfileController {
     constructor(
@@ -112,7 +114,21 @@ export class ProfileController {
                 return;
             }
 
-            const result = await this.updateProfileImageByUrlUseCase.execute(userId, avatarUrl);
+            // Validar URL de avatar con nuevos validadores
+            const urlValidation = ContextualValidator.validateAvatarUrl(avatarUrl);
+            if (!urlValidation.isValid) {
+                res.status(400).json({
+                    success: false,
+                    message: urlValidation.error,
+                    data: null
+                });
+                return;
+            }
+
+            // Sanitizar userId
+            const sanitizedUserId = InputSanitizer.sanitizeUserId(userId);
+
+            const result = await this.updateProfileImageByUrlUseCase.execute(sanitizedUserId, avatarUrl);
 
             const response: UpdateProfileImageResponse = {
                 success: true,

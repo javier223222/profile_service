@@ -1,5 +1,7 @@
 import { ProcessProfileUpdateUseCase } from '../../application/use-cases/ProcessProfileUpdateUseCase';
 import {ProfileUpdateMessage} from '../../domain/entities/ProfileUpdateMessage';
+import { UserProfileValidator } from '../validation/UserProfileValidator';
+import { InputSanitizer } from '../validation/InputSanitizer';
 
 export class ProfileUpdateMessageHandler {
     constructor(
@@ -59,16 +61,23 @@ export class ProfileUpdateMessageHandler {
             }
         }
 
-        if (typeof message.points_earned !== 'number') {
-            throw new Error('points_earned must be a number');
+        // Validar points_earned con los nuevos validadores
+        const pointsValidation = UserProfileValidator.validatePoints(message.points_earned);
+        if (!pointsValidation.isValid) {
+            throw new Error(`Invalid points_earned: ${pointsValidation.error}`);
         }
 
-        if (message.points_earned < 0) {
-            throw new Error('points_earned cannot be negative');
+        // Sanitizar y validar user_id
+        const sanitizedUserId = InputSanitizer.sanitizeUserId(message.user_id);
+        const userIdValidation = UserProfileValidator.validateUserId(sanitizedUserId);
+        if (!userIdValidation.isValid) {
+            console.warn(`[VALIDATION WARNING] Invalid user_id in message: ${userIdValidation.error}`);
         }
 
-        if (message.points_earned > 1000) {
-            console.warn(`Unusually high points earned: ${message.points_earned} for user ${message.user_id}`);
+        // Nota: domain no está en ProfileUpdateMessage interface, se valida en el use case si está presente
+        
+        if (message.points_earned > 500) {
+            console.warn(`[VALIDATION WARNING] Unusually high points earned: ${message.points_earned} for user ${message.user_id}`);
         }
 
         console.log('Message validation passed');

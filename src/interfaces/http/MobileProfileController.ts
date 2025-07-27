@@ -11,6 +11,8 @@ import { GetLevelRulesUseCase } from 'application/use-cases/GetLevelRulesUseCase
 import { GetDailyActivitiesUseCase } from 'application/use-cases/GetDailyActivitiesUseCase';
 import { GetMonthlyMetricsUseCase } from 'application/use-cases/GetMonthlyMetricsUseCase';
 import { GetLeaderboardUseCase } from 'application/use-cases/GetLeaderboardUseCase';
+import { InputSanitizer } from '../../infrastructure/validation/InputSanitizer';
+import { UserProfileValidator } from '../../infrastructure/validation/UserProfileValidator';
 
 export class MobileProfileController {
     constructor(
@@ -191,12 +193,39 @@ export class MobileProfileController {
                 });
                 return;
             }
-            console.log('Creating user profile:', { userId, seniority, specialization, avatarUrl });
+
+            // Sanitizar y normalizar datos de entrada
+            const sanitizedUserId = InputSanitizer.sanitizeUserId(userId);
+            const normalizedSeniority = InputSanitizer.normalizeSeniority(seniority);
+            const normalizedSpecialization = InputSanitizer.normalizeSpecialization(specialization);
+
+            // Validar datos sanitizados (solo log warnings para mantener compatibilidad)
+            const userIdValidation = UserProfileValidator.validateUserId(sanitizedUserId);
+            if (!userIdValidation.isValid) {
+                console.warn(`[VALIDATION WARNING] ${userIdValidation.error}`);
+            }
+
+            const seniorityValidation = UserProfileValidator.validateSeniority(normalizedSeniority);
+            if (!seniorityValidation.isValid) {
+                console.warn(`[VALIDATION WARNING] ${seniorityValidation.error}`);
+            }
+
+            const specializationValidation = UserProfileValidator.validateSpecialization(normalizedSpecialization);
+            if (!specializationValidation.isValid) {
+                console.warn(`[VALIDATION WARNING] ${specializationValidation.error}`);
+            }
+
+            console.log('Creating user profile:', { 
+                userId: sanitizedUserId, 
+                seniority: normalizedSeniority, 
+                specialization: normalizedSpecialization, 
+                avatarUrl 
+            });
 
             const profile = await this.createUserProfileUseCase.execute({
-                userId,
-                seniority,
-                specialization,
+                userId: sanitizedUserId,
+                seniority: normalizedSeniority,
+                specialization: normalizedSpecialization,
                 avatarUrl
             });
 
@@ -381,17 +410,34 @@ export class MobileProfileController {
                 return;
             }
 
-            if (typeof points !== 'number' || points <= 0) {
+            // Validación mejorada de puntos con los nuevos validadores
+            const pointsValidation = UserProfileValidator.validatePoints(points);
+            if (!pointsValidation.isValid) {
                 res.status(400).json({ 
-                    error: 'points must be a positive number' 
+                    error: pointsValidation.error,
+                    code: 'INVALID_POINTS'
                 });
                 return;
             }
 
+            // Sanitizar y validar domain
+            const sanitizedDomain = InputSanitizer.sanitizeDomain(domain);
+            const domainValidation = UserProfileValidator.validateDomain(sanitizedDomain);
+            if (!domainValidation.isValid) {
+                res.status(400).json({ 
+                    error: domainValidation.error,
+                    code: 'INVALID_DOMAIN' 
+                });
+                return;
+            }
+
+            // Sanitizar userId
+            const sanitizedUserId = InputSanitizer.sanitizeUserId(userId);
+
             const result = await this.addPointsUseCase.execute({
-                userId,
+                userId: sanitizedUserId,
                 points,
-                domain,
+                domain: sanitizedDomain,
                 sessionId,
                 sourceService: sourceService || 'mobile-app'
             });

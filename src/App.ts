@@ -27,6 +27,7 @@ import { MessagingService } from './infrastructure/messaging/MessagingService';
 import { ProcessProfileUpdateUseCase } from './application/use-cases/ProcessProfileUpdateUseCase';
 import { PrismaDailyActivityRepository } from './infrastructure/repositories/PrismaDailyActivityRepository';
 import { PrismaLevelRuleRepository } from './infrastructure/prisma/PrismaLevelRuleRepository';
+import { ValidationMiddleware } from './infrastructure/validation/ValidationMiddleware';
 
 export class App {
     public app: express.Application;
@@ -79,7 +80,9 @@ export class App {
     }
 
     private setupMiddleware(): void {
-      
+        // Middleware de logging de validaciones (no afecta funcionalidad)
+        this.app.use(ValidationMiddleware.logValidationMetrics);
+        
         this.app.use(express.json({ limit: '10mb' }));
         this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
