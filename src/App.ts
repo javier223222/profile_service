@@ -12,6 +12,7 @@ import { CloudinaryService } from './infrastructure/services/CloudinaryService';
 import { UploadProfileImageUseCase } from './application/use-cases/UploadProfileImageUseCase';
 import { UpdateProfileImageByUrlUseCase } from './application/use-cases/UpdateProfileImageByUrlUseCase';
 import { GetUserProfileUseCase } from './application/use-cases/GetUserProfileUseCase';
+import { GetOrCreateUserProfileUseCase } from './application/use-cases/GetOrCreateUserProfileUseCase';
 import { GetWeeklyProgressUseCase } from './application/use-cases/GetWeeklyProgressUseCase';
 import { GetUserStatsUseCase } from './application/use-cases/GetUserStatsUseCase';
 import { CreateUserProfileUseCase } from './application/use-cases/CreateUserProfileUseCase';
@@ -129,6 +130,7 @@ export class App {
         const levelRuleRepo = new PrismaLevelRuleRepository(this.prisma);
         
         const getUserProfileUseCase = new GetUserProfileUseCase(userProfileRepository);
+        const getOrCreateUserProfileUseCase = new GetOrCreateUserProfileUseCase(userProfileRepository);
         const getWeeklyProgressUseCase = new GetWeeklyProgressUseCase(weeklyProgressRepo);
         const getUserStatsUseCase = new GetUserStatsUseCase(
             userProfileRepository,
@@ -162,6 +164,7 @@ export class App {
 
         const mobileProfileController = new MobileProfileController(
             getUserProfileUseCase,
+            getOrCreateUserProfileUseCase,
             getWeeklyProgressUseCase,
             getUserStatsUseCase,
             createUserProfileUseCase,

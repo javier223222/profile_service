@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { GetUserProfileUseCase } from 'application/use-cases/GetUserProfileUseCase';
+import { GetOrCreateUserProfileUseCase } from 'application/use-cases/GetOrCreateUserProfileUseCase';
 import { GetWeeklyProgressUseCase } from 'application/use-cases/GetWeeklyProgressUseCase';
 import { GetUserStatsUseCase } from 'application/use-cases/GetUserStatsUseCase';
 import { UpdateUserProfileUseCase } from 'application/use-cases/UpdateUserProfileUseCase';
@@ -14,6 +15,7 @@ import { GetLeaderboardUseCase } from 'application/use-cases/GetLeaderboardUseCa
 export class MobileProfileController {
     constructor(
         private getUserProfileUseCase: GetUserProfileUseCase,
+        private getOrCreateUserProfileUseCase: GetOrCreateUserProfileUseCase,
         private getWeeklyProgressUseCase: GetWeeklyProgressUseCase,
         private getUserStatsUseCase: GetUserStatsUseCase,
         private createUserProfileUseCase: CreateUserProfileUseCase,
@@ -36,12 +38,8 @@ export class MobileProfileController {
                 return;
             }
 
-            const profile = await this.getUserProfileUseCase.execute(userId);
-
-            if (!profile) {
-                res.status(404).json({ error: 'User profile not found' });
-                return;
-            }
+            // Usar GetOrCreateUserProfileUseCase para crear automáticamente si no existe
+            const profile = await this.getOrCreateUserProfileUseCase.execute(userId);
 
             res.status(200).json({
                 success: true,
@@ -71,6 +69,9 @@ export class MobileProfileController {
                 return;
             }
 
+            // Asegurar que el usuario existe (crear si no existe)
+            await this.getOrCreateUserProfileUseCase.execute(userId);
+
             const weeklyProgress = await this.getWeeklyProgressUseCase.execute(userId);
 
             res.status(200).json({
@@ -97,6 +98,9 @@ export class MobileProfileController {
                 res.status(400).json({ error: 'User ID is required' });
                 return;
             }
+
+            // Asegurar que el usuario existe (crear si no existe)
+            await this.getOrCreateUserProfileUseCase.execute(userId);
 
             const stats = await this.getUserStatsUseCase.execute(userId);
 
@@ -439,6 +443,9 @@ export class MobileProfileController {
                 return;
             }
 
+            // Asegurar que el usuario existe (crear si no existe)
+            await this.getOrCreateUserProfileUseCase.execute(userId);
+
             const request = {
                 userId,
                 startDate: startDate ? new Date(startDate as string) : undefined,
@@ -468,6 +475,9 @@ export class MobileProfileController {
                 res.status(400).json({ error: 'User ID is required' });
                 return;
             }
+
+            // Asegurar que el usuario existe (crear si no existe)
+            await this.getOrCreateUserProfileUseCase.execute(userId);
 
             const request = {
                 userId,

@@ -18,8 +18,10 @@ services:
       # o usarlas como referencia si están en otros contenedores
       # - postgres
       # - rabbitmq
+    restart: unless-stopped
     networks:
       - microservices-network
+    
 
 networks:
   microservices-network:
