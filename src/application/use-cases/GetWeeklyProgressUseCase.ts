@@ -1,6 +1,6 @@
 import { WeeklyProgressRepository } from '../../domain/repositories/WeeklyProgressRepository';
 import WeeklyProgress from '../../domain/entities/WeeklyProgress';
-
+import crypto from 'crypto';
 export class GetWeeklyProgressUseCase {
     constructor(
         private weeklyProgressRepository: WeeklyProgressRepository

@@ -85,7 +85,7 @@ export class App {
 
         this.app.use(fileUpload({
             createParentPath: true,
-            limits: { fileSize: 5 * 1024 * 1024 }, 
+            limits: { fileSize: 20 * 1024 * 1024 }, 
             abortOnLimit: true,
             responseOnLimit: 'File size limit exceeded',
             useTempFiles: true,
