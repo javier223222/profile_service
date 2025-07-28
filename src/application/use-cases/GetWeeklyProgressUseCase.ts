@@ -1,5 +1,6 @@
 import { WeeklyProgressRepository } from '../../domain/repositories/WeeklyProgressRepository';
 import WeeklyProgress from '../../domain/entities/WeeklyProgress';
+import { randomUUID } from 'crypto';
 
 export class GetWeeklyProgressUseCase {
     constructor(
@@ -21,7 +22,7 @@ export class GetWeeklyProgressUseCase {
                 const weekStartDate = this.getWeekStart(today);
                 
                 weeklyProgress = {
-                    id: crypto.randomUUID(),
+                    id: randomUUID(),
                     userId: userId,
                     weekStartDate: weekStartDate,
                     completedDays: [false, false, false, false, false, false, false], // M T W T F S S

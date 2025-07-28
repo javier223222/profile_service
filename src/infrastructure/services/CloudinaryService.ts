@@ -50,7 +50,7 @@ export class CloudinaryService {
         try {
             const urlObj = new URL(url);
             const validDomains = ['res.cloudinary.com', 'cloudinary.com',];
-            const hasValidExtension = /\.(jpg|jpeg|png|gif|webp)$/i.test(urlObj.pathname);
+            const hasValidExtension = /\.(jpg|jpeg|png|gif|webp|HEIC|heic)$/i.test(urlObj.pathname);
             const hasValidDomain = validDomains.some(domain => urlObj.hostname.includes(domain));
             
             return hasValidDomain || hasValidExtension;

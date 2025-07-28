@@ -48,7 +48,7 @@ export class ProfileController {
             }
 
             
-            const maxSize = 5 * 1024 * 1024; 
+            const maxSize = 20 * 1024 * 1024; 
             if (file.size > maxSize) {
                 res.status(400).json({
                     success: false,
